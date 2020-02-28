@@ -5,12 +5,15 @@ import logging
 from tkinter import messagebox as mb
 from Crypto.Random import get_random_bytes
 from Crypto.Cipher import AES
+import sys
+import pyperclip
 
 logging.basicConfig(filename='activity.log', level=logging.INFO,
                     format='%(asctime)s : %(levelname)s : %(message)s')
 
 
 def select_all_passwords():
+    PASSWORDS = {}
     try:
         sqlite_connection = sqlite3.connect(os.getenv('db'))
         cursor = sqlite_connection.cursor()
@@ -22,10 +25,23 @@ def select_all_passwords():
         logging.info("Python Variables read successfully into SqliteDb_developers table")
         rows = cursor.fetchall()
 
+        # PASSWORDS = dict()
         # for row in rows:
-        # 	print(row)
+        #     dict((row, rows) for x, y in PASSWORDS)
 
         cursor.close()
+        print(PASSWORDS)
+        if len(sys.argv) < 2:
+            print('Usage: python pow.py[account] - copy account password')
+            sys.exit()
+
+        account = sys.argv[1]  # first command line arg is account name
+
+        if account in PASSWORDS:
+            pyperclip.copy(PASSWORDS[account])
+            print('Password for {} copied to clipboard.'.format(account))
+        else:
+            print('There is no account named {}.'.format(account))
 
     except sqlite3.Error as error:
         logging.error("Failed to read Python variable into sqlite table", error)
@@ -145,4 +161,5 @@ win.title("Password Locker")
 # App Favicon
 win.wm_iconbitmap("favicon.ico")
 win.config(menu=menu_bar)
+select_all_passwords()
 win.mainloop()
