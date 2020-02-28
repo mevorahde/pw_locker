@@ -31,18 +31,8 @@ def select_all_passwords():
 
         cursor.close()
         print(PASSWORDS)
-        if len(sys.argv) < 2:
-            print('Usage: python pow.py[account] - copy account password')
-            sys.exit()
 
-        account = sys.argv[1]  # first command line arg is account name
-
-        if account in PASSWORDS:
-            pyperclip.copy(PASSWORDS[account])
-            print('Password for {} copied to clipboard.'.format(account))
-        else:
-            print('There is no account named {}.'.format(account))
-
+        return PASSWORDS
     except sqlite3.Error as error:
         logging.error("Failed to read Python variable into sqlite table", error)
         mb.showerror('Failed', 'Failed to insert Python variable into sqlite table')
@@ -161,5 +151,18 @@ win.title("Password Locker")
 # App Favicon
 win.wm_iconbitmap("favicon.ico")
 win.config(menu=menu_bar)
-select_all_passwords()
+# select_all_passwords()
 win.mainloop()
+
+if len(sys.argv) < 2:
+    print('Usage: python pow.py[account] - copy account password')
+    sys.exit()
+
+account = sys.argv[1]  # first command line arg is account name
+
+if account in select_all_passwords.Passwords:
+    pyperclip.copy(select_all_passwords.PASSWORDS[account])
+    print('Password for {} copied to clipboard.'.format(account))
+else:
+    print('There is no account named {}.'.format(account))
+
