@@ -5,7 +5,7 @@ import sys
 import pyperclip
 from Crypto.Cipher import AES
 
-logging.basicConfig(filename='activity.log', level=logging.INFO,
+logging.basicConfig(filename='activity_pw.log', level=logging.INFO,
                     format='%(asctime)s : %(levelname)s : %(message)s')
 
 
@@ -13,7 +13,7 @@ def select_all_passwords():
     encrypt_location = os.getenv('encrypt_variables')
     try:
         file_in2 = open(encrypt_location, 'rb')
-        iv = file_in2.read(16)
+        iv = file_in2.read(32)
         file_in2.close()
 
         sqlite_connection = sqlite3.connect(os.getenv('db'))
@@ -65,11 +65,18 @@ if len(sys.argv) < 2:
 
 account = sys.argv[1]  # first command line arg is account name
 
-account_case = account.casefold()
+if len(sys.argv) > 1:
+    for i in range(1, len(sys.argv)):
+        if str.isdigit(sys.argv[i]):
+            arg = sys.argv[i - 1]
+            PASSWORDS[arg.lower()] = int(sys.argv[i])
 
-
-if account or account_case in PASSWORDS:
-    pyperclip.copy(PASSWORDS[account])
-    print('Password for {} copied to clipboard.'.format(account))
-else:
-    print('There is no account named {}.'.format(account))
+try:
+    if account or arg in PASSWORDS:
+        pyperclip.copy(PASSWORDS[account])
+        print('Password for {} copied to clipboard.'.format(account))
+    else:
+        print('There is no account named {}.'.format(account))
+except Exception as e:
+    logging.exception(e.args)
+    print("Cannot process your request at this time.")

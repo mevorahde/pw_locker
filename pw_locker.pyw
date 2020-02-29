@@ -56,10 +56,10 @@ def set_data_to_db():
     ciphered_data = ciphered_bytes
     insert_variable_into_table(user, ciphered_data, key)
 
-    # Save the key to a file
-    file_out = open(key_location, "wb")  # wb = write bytes
-    file_out.write(key)
-    file_out.close()
+    # # Save the key to a file
+    # file_out = open(key_location, "wb")  # wb = write bytes
+    # file_out.write(key)
+    # file_out.close()
 
     # Save variables to second file
     file_out2 = open(encrypt_location, "wb")
