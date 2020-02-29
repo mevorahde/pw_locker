@@ -3,43 +3,11 @@ import sqlite3
 import tkinter as tk
 import logging
 from tkinter import messagebox as mb
-from Crypto.Random import get_random_bytes
 from Crypto.Cipher import AES
-import sys
-import pyperclip
+
 
 logging.basicConfig(filename='activity.log', level=logging.INFO,
                     format='%(asctime)s : %(levelname)s : %(message)s')
-
-
-def select_all_passwords():
-    PASSWORDS = {}
-    try:
-        sqlite_connection = sqlite3.connect(os.getenv('db'))
-        cursor = sqlite_connection.cursor()
-        logging.info("Connected to SQLite")
-
-        sqlite_select_with_param = os.getenv('select_user')
-        cursor.execute(sqlite_select_with_param)
-        sqlite_connection.commit()
-        logging.info("Python Variables read successfully into SqliteDb_developers table")
-        rows = cursor.fetchall()
-
-        # PASSWORDS = dict()
-        # for row in rows:
-        #     dict((row, rows) for x, y in PASSWORDS)
-
-        cursor.close()
-        print(PASSWORDS)
-
-        return PASSWORDS
-    except sqlite3.Error as error:
-        logging.error("Failed to read Python variable into sqlite table", error)
-        mb.showerror('Failed', 'Failed to insert Python variable into sqlite table')
-    finally:
-        if (sqlite_connection):
-            sqlite_connection.close()
-            logging.info("The SQLite connection is closed")
 
 
 def insert_variable_into_table(username, password):
@@ -66,14 +34,16 @@ def insert_variable_into_table(username, password):
 
 def set_data_to_db():
     key_location = os.getenv('key_location')
+    encrypt_location = os.getenv('encrypt_variables')
     # Generate the key
-    key = get_random_bytes(32)
+    # key = get_random_bytes(32)
+    with open(key_location, 'rb') as f:
+        first_line = f.readline().rstrip()
 
-    # Save the key to a file
-    file_out = open(key_location, "wb")  # wb = write bytes
-    file_out.write(key)
-    file_out.close()
+    key = first_line
+
     user = UE.get()
+    user = user.casefold()
     pw = PE.get()
 
     # === Encrypt ===
@@ -87,32 +57,18 @@ def set_data_to_db():
     # This is now our data
     iv = cipher_encrypt.iv
     ciphered_data = ciphered_bytes
-    ciphered_string = ciphered_data.decode('iso-8859-1').encode('utf8')
-    insert_variable_into_table(user, ciphered_string)
-    # === Decrypt ===
+    insert_variable_into_table(user, ciphered_data)
 
-    # Later on ... (assume we no longer have the key)
-    file_in = open(key_location, "rb")  # Read bytes
-    key_from_file = file_in.read()  # This key should be the same
-    file_in.close()
+    # Save the key to a file
+    file_out = open(key_location, "wb")  # wb = write bytes
+    file_out.write(key)
+    file_out.close()
 
-    # Since this is a demonstration, we can verify that the keys are the same (just for proof - you don't need to do
-    # this)
-    assert key == key_from_file, 'Keys do not match'  # Will throw an AssertionError if they do not match
+    # Save variables to second file
+    file_out2 = open(encrypt_location, "wb")
+    file_out2.write(iv)
+    file_out2.close()
 
-    # Create the cipher object and decrypt the data
-    cipher_decrypt = AES.new(key, AES.MODE_CFB, iv=iv)
-    deciphered_bytes = cipher_decrypt.decrypt(ciphered_data)
-
-    # Convert the bytes object back to the string
-    decrypted_data = deciphered_bytes.decode('utf-8')
-    print("Decrypted data:", decrypted_data)
-
-    # === Proving the data matches ===
-
-    # Now we prove that the original data is the same as the data we just ciphered out (running these should throw no
-    # errors)
-    assert pw == decrypted_data, 'Original data does not match the result'
     UE.delete(0, tk.END)
     PE.delete(0, tk.END)
     mb.showinfo('Success', 'Data Successfully Saved')
@@ -151,18 +107,6 @@ win.title("Password Locker")
 # App Favicon
 win.wm_iconbitmap("favicon.ico")
 win.config(menu=menu_bar)
-# select_all_passwords()
 win.mainloop()
 
-if len(sys.argv) < 2:
-    print('Usage: python pow.py[account] - copy account password')
-    sys.exit()
-
-account = sys.argv[1]  # first command line arg is account name
-
-if account in select_all_passwords.Passwords:
-    pyperclip.copy(select_all_passwords.PASSWORDS[account])
-    print('Password for {} copied to clipboard.'.format(account))
-else:
-    print('There is no account named {}.'.format(account))
 
