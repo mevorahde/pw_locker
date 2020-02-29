@@ -13,7 +13,7 @@ def select_all_passwords():
     encrypt_location = os.getenv('encrypt_variables')
     try:
         file_in2 = open(encrypt_location, 'rb')
-        iv = file_in2.read(32)
+        iv = file_in2.read(16)
         file_in2.close()
 
         sqlite_connection = sqlite3.connect(os.getenv('db'))
