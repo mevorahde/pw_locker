@@ -3,6 +3,7 @@ import sqlite3
 import tkinter as tk
 import logging
 from tkinter import messagebox as mb
+from Crypto.Random import get_random_bytes
 from Crypto.Cipher import AES
 
 
@@ -10,14 +11,14 @@ logging.basicConfig(filename='activity.log', level=logging.INFO,
                     format='%(asctime)s : %(levelname)s : %(message)s')
 
 
-def insert_variable_into_table(username, password):
+def insert_variable_into_table(username, password, key):
     try:
         sqlite_connection = sqlite3.connect(os.getenv('db'))
         cursor = sqlite_connection.cursor()
         logging.info("Connected to SQLite")
         sqlite_insert_with_param = os.getenv('insert_user')
-        data_tuple = (username, password)
-        cursor.execute(sqlite_insert_with_param, data_tuple)
+        data = (username, password, key)
+        cursor.execute(sqlite_insert_with_param, data)
         sqlite_connection.commit()
         logging.info("Python Variables inserted successfully into SqliteDb_developers table")
 
@@ -36,11 +37,7 @@ def set_data_to_db():
     key_location = os.getenv('key_location')
     encrypt_location = os.getenv('encrypt_variables')
     # Generate the key
-    # key = get_random_bytes(32)
-    with open(key_location, 'rb') as f:
-        first_line = f.readline().rstrip()
-
-    key = first_line
+    key = get_random_bytes(32)
 
     user = UE.get()
     user = user.casefold()
@@ -57,7 +54,7 @@ def set_data_to_db():
     # This is now our data
     iv = cipher_encrypt.iv
     ciphered_data = ciphered_bytes
-    insert_variable_into_table(user, ciphered_data)
+    insert_variable_into_table(user, ciphered_data, key)
 
     # Save the key to a file
     file_out = open(key_location, "wb")  # wb = write bytes
