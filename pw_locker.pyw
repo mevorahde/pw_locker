@@ -4,17 +4,25 @@ import tkinter as tk
 import logging
 from tkinter import messagebox as mb
 from Crypto.Random import get_random_bytes
+from base64 import b64encode
 from Crypto.Cipher import AES
-
+from Crypto.Util.Padding import pad
 
 # Logging configurations
-logging.basicConfig(filename='activity.log', level=logging.INFO,
+logging.basicConfig(filename='activity.log',
+                    level=logging.DEBUG,
                     format='%(asctime)s : %(levelname)s : %(message)s')
+
+# define a Handler which writes INFO messages or higher to the sys.stderr
+console = logging.StreamHandler()
+console.setLevel(logging.INFO)
+# add the handler to the root logger
+logging.getLogger('').addHandler(console)
 
 
 # Function to insert a username, password, and key value into the local database when the user enters in a username
 # and password values in their respected entry boxes and hits the 'Submit' button.
-def insert_variable_into_table(username, password, key):
+def insert_variable_into_table(username, password, key, iv):
     try:
         # Make a connection to the local db
         sqlite_connection = sqlite3.connect(os.getenv('db'))
@@ -22,7 +30,7 @@ def insert_variable_into_table(username, password, key):
         logging.info("Connected to SQLite")
         # SQL Insert query
         sqlite_insert_with_param = os.getenv('insert_user')
-        data = (username, password, key)
+        data = (username, password, key, iv)
         # Run the Insert query
         cursor.execute(sqlite_insert_with_param, data)
         sqlite_connection.commit()
@@ -32,9 +40,36 @@ def insert_variable_into_table(username, password, key):
         logging.error("Failed to insert Python variable into sqlite table", error)
         mb.showerror('Failed', 'Failed to insert Python variable into sqlite table')
     finally:
-        if (sqlite_connection):    # Close the local db connection
+        if (sqlite_connection):  # Close the local db connection
             sqlite_connection.close()
             logging.info("The SQLite connection is closed")
+
+
+# Function to check if the Username field is blank
+def user_check_empty():
+    success = True
+    if UE.get():
+        success = True
+        return success
+    else:
+        success = False
+        logging.error("Failed: Input is required for Username")
+        mb.showerror('Failed', 'Input is required for Username')
+        return success
+
+
+# Function to check if the Password field is blank
+def password_check_empty():
+    success2 = True
+    if PE.get():
+        success2 = True
+        return success2
+    else:
+        success2 = False
+        logging.error("Failed: Input is required for Password")
+        mb.showerror('Failed', 'Input is required for Password')
+        return success2
+
 
 '''
 Function that does the following:
@@ -51,48 +86,57 @@ Function that does the following:
 def set_data_to_db():
     try:
         # key_location = os.getenv('key_location')
-        encrypt_location = os.getenv('encrypt_variables')
+        # encrypt_location = os.getenv('encrypt_variables')
         # Generate the key
         key = get_random_bytes(32)
+        success_check = user_check_empty()
+        success2_check = password_check_empty()
+        if not success_check or not success2_check:
+            success = False
+            success2 = False
+        else:
+            user = UE.get()
+            user = user.casefold()
+            pw = PE.get()
 
-        user = UE.get()
-        user = user.casefold()
-        pw = PE.get()
+            # === Encrypt ===
+            # First make your data a bytes object. To convert a string to a bytes object, we can call .encode() on it
+            pw_data = pw.encode('utf-8')
 
-        # === Encrypt ===
-        # First make your data a bytes object. To convert a string to a bytes object, we can call .encode() on it
-        pw_data = pw.encode('utf-8')
+            # Create the cipher object and encrypt the data
+            cipher_encrypt = AES.new(key, AES.MODE_CBC)
+            ct_bytes = cipher_encrypt.encrypt(pad(pw_data, AES.block_size))
+            # ciphered_bytes = cipher_encrypt.encrypt(pw_data)
+            iv = b64encode(cipher_encrypt.iv).decode('utf-8')
+            ct = b64encode(ct_bytes).decode('utf-8')
+            # This is now our data
+            # iv = cipher_encrypt.iv
+            ciphered_data = ct_bytes
+            insert_variable_into_table(user, ciphered_data, key, iv)
+            success = True
+            success2 = True
 
-        # Create the cipher object and encrypt the data
-        cipher_encrypt = AES.new(key, AES.MODE_CFB)
-        ciphered_bytes = cipher_encrypt.encrypt(pw_data)
+            # # Save the key to a file
+            # file_out = open(key_location, "wb")  # wb = write bytes
+            # file_out.write(key)
+            # file_out.close()
 
-        # This is now our data
-        iv = cipher_encrypt.iv
-        ciphered_data = ciphered_bytes
-        insert_variable_into_table(user, ciphered_data, key)
-
-        # # Save the key to a file
-        # file_out = open(key_location, "wb")  # wb = write bytes
-        # file_out.write(key)
-        # file_out.close()
-
-        # Save variables to file
-        file_out2 = open(encrypt_location, "wb")
-        file_out2.write(iv)
-        file_out2.close()
+            # Save variables to file
+            # file_out2 = open(encrypt_location, "wb")
+            # file_out2.write(iv)
+            # file_out2.close()
 
         # Clears out the username and password entry boxes
         UE.delete(0, tk.END)
         PE.delete(0, tk.END)
 
         # Successful pop up message
-        success = True
-        if success:
+        if success and success2:
             mb.showinfo('Success', 'Data Successfully Saved')
     except Exception as e:
         logging.error("Something went wrong!", e)
         mb.showerror('Failed', 'Something went wrong!')
+
 
 ######################################################################################################################
 # GUI Layout
@@ -102,7 +146,7 @@ def set_data_to_db():
 win = tk.Tk()
 win.geometry('300x250')  # Set window size
 win.resizable(0, 0)  # Fix window
-bullet = "\u2022" # 'Bullet'/dot format
+bullet = "\u2022"  # 'Bullet'/dot format
 
 # Username Label and Entry Box
 UL = tk.Label(win, text="Username: ")
@@ -110,18 +154,17 @@ UE = tk.Entry(win)
 
 # Password Label and Entry Box
 PL = tk.Label(win, text="Password: ")
-PE = tk.Entry(win, show=bullet) # Calling 'bullet' format to hide the password from being seen
+PE = tk.Entry(win, show=bullet)  # Calling 'bullet' format to hide the password from being seen
 
 # Submit and Exit buttons
 SB = tk.Button(win, text="Submit", padx=10, command=set_data_to_db)
-EB = tk.Button(win, text="Exit", padx=15, command=win.quit) # Closes the program
+EB = tk.Button(win, text="Exit", padx=15, command=win.quit)  # Closes the program
 
 # File Menu Bar
 menu_bar = tk.Menu(win)
 file_menu = tk.Menu(menu_bar, tearoff=0)
 file_menu.add_command(label="Exit", command=win.quit)  # Closes the program
 menu_bar.add_cascade(label="File", menu=file_menu)
-
 
 # Win App Grid
 UL.grid(row=0, column=0, padx=15, pady=40)
