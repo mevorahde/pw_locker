@@ -7,6 +7,7 @@ from Crypto.Random import get_random_bytes
 from base64 import b64encode
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
+from dotenv import load_dotenv
 
 # Logging configurations
 logging.basicConfig(filename='activity.log',
@@ -18,6 +19,16 @@ console = logging.StreamHandler()
 console.setLevel(logging.INFO)
 # add the handler to the root logger
 logging.getLogger('').addHandler(console)
+
+load_dotenv()
+
+# OR, the same with increased verbosity
+load_dotenv(verbose=True)
+
+# OR, explicitly providing path to '.env'
+from pathlib import Path  # python3 only
+env_path = Path('.') / '.env'
+load_dotenv(dotenv_path=env_path)
 
 
 # Function to insert a username, password, and key value into the local database when the user enters in a username
