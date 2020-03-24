@@ -7,7 +7,7 @@ from Crypto.Random import get_random_bytes
 from base64 import b64encode
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
-from dotenv import load_dotenv
+
 
 # Logging configurations
 logging.basicConfig(filename='activity.log',
@@ -20,36 +20,30 @@ console.setLevel(logging.INFO)
 # add the handler to the root logger
 logging.getLogger('').addHandler(console)
 
-load_dotenv()
-
-# OR, the same with increased verbosity
-load_dotenv(verbose=True)
-
-# OR, explicitly providing path to '.env'
-from pathlib import Path  # python3 only
-env_path = Path('.') / '.env'
-load_dotenv(dotenv_path=env_path)
-
 
 # Function to insert a username, password, and key value into the local database when the user enters in a username
 # and password values in their respected entry boxes and hits the 'Submit' button.
 def insert_variable_into_table(username, password, key, iv):
+    success = True
     try:
         # Make a connection to the local db
-        sqlite_connection = sqlite3.connect(os.getenv('db'))
+        sqlite_connection = sqlite3.connect('users.db')
         cursor = sqlite_connection.cursor()
         logging.info("Connected to SQLite")
         # SQL Insert query
-        sqlite_insert_with_param = os.getenv('insert_user')
+        sqlite_insert_with_param = """INSERT INTO users (Username, Password, Key, IV) VALUES (?, ?, ?, ?);"""
         data = (username, password, key, iv)
         # Run the Insert query
         cursor.execute(sqlite_insert_with_param, data)
         sqlite_connection.commit()
         logging.info("Python Variables inserted successfully into SqliteDb_developers table")
         cursor.close()
+        return success
     except sqlite3.Error as error:
+        success = False
         logging.error("Failed to insert Python variable into sqlite table", error)
         mb.showerror('Failed', 'Failed to insert Python variable into sqlite table')
+        return success
     finally:
         if (sqlite_connection):  # Close the local db connection
             sqlite_connection.close()
@@ -96,8 +90,6 @@ Function that does the following:
 
 def set_data_to_db():
     try:
-        # key_location = os.getenv('key_location')
-        # encrypt_location = os.getenv('encrypt_variables')
         # Generate the key
         key = get_random_bytes(32)
         success_check = user_check_empty()
@@ -124,18 +116,9 @@ def set_data_to_db():
             # iv = cipher_encrypt.iv
             ciphered_data = ct_bytes
             insert_variable_into_table(user, ciphered_data, key, iv)
+            # TO DO: Validation if the insert_variable_into_table hit an error or not
             success = True
             success2 = True
-
-            # # Save the key to a file
-            # file_out = open(key_location, "wb")  # wb = write bytes
-            # file_out.write(key)
-            # file_out.close()
-
-            # Save variables to file
-            # file_out2 = open(encrypt_location, "wb")
-            # file_out2.write(iv)
-            # file_out2.close()
 
         # Clears out the username and password entry boxes
         UE.delete(0, tk.END)

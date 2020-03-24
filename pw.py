@@ -6,7 +6,7 @@ import pyperclip
 from base64 import b64decode
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import unpad
-from dotenv import load_dotenv
+
 
 # Logging configurations
 logging.basicConfig(filename='activity.log',
@@ -19,33 +19,12 @@ console.setLevel(logging.INFO)
 # add the handler to the root logger
 logging.getLogger('').addHandler(console)
 
-# define a Handler which writes INFO messages or higher to the sys.stderr
-console = logging.StreamHandler()
-console.setLevel(logging.INFO)
-# add the handler to the root logger
-logging.getLogger('').addHandler(console)
-
-load_dotenv()
-
-# OR, the same with increased verbosity
-load_dotenv(verbose=True)
-
-# OR, explicitly providing path to '.env'
-from pathlib import Path  # python3 only
-env_path = Path('.') / '.env'
-load_dotenv(dotenv_path=env_path)
-
 
 def select_all_passwords():
     encrypt_location = os.getenv('encrypt_variables')
     try:
-        # Read file and convert Encrypt variables into function variables
-        # file_in2 = open(encrypt_location, 'rb')
-        # iv = file_in2.read(16)
-        # file_in2.close() # close file
-
         # Connect to the local database
-        sqlite_connection = sqlite3.connect(os.getenv('db'))
+        sqlite_connection = sqlite3.connect('users.db')
         cursor = sqlite_connection.cursor()
         cursor2 = sqlite_connection.cursor()
         cursor3 = sqlite_connection.cursor()
@@ -55,11 +34,11 @@ def select_all_passwords():
         cursor.row_factory = lambda cursor, row: row[0]
         cursor3.row_factory = lambda cursor, row: row[0]
         # Get usernames query
-        sqlite_select_with_param = os.getenv('select_user')
+        sqlite_select_with_param = """SELECT IV FROM users;"""
         # Get encrypted passwords query
-        sqlite_select_with_param2 = os.getenv('select_pw')
+        sqlite_select_with_param2 = """SELECT Password, Key FROM users;"""
         # Get encrypted IV query
-        sqlite_select_with_param3 = os.getenv('select_iv')
+        sqlite_select_with_param3 = """SELECT Username FROM users;"""
         # Run usernames query
         cursor.execute(sqlite_select_with_param)
         # Run passwords query
