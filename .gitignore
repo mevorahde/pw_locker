@@ -132,6 +132,6 @@ dmypy.json
 .vs/
 *Db.*
 
-
+/users.db
 /file.bin
 /ev.bin
