@@ -37,15 +37,11 @@ load_dotenv(dotenv_path=env_path)
 
 
 def select_all_passwords():
-    encrypt_location = os.getenv('encrypt_variables')
     try:
-        # Read file and convert Encrypt variables into function variables
-        # file_in2 = open(encrypt_location, 'rb')
-        # iv = file_in2.read(16)
-        # file_in2.close() # close file
-
         # Connect to the local database
-        sqlite_connection = sqlite3.connect(os.getenv('db'))
+        # sqlite_connection = os.getenv('db')
+        # sqlite_connection = sqlite3.connect('users.db')
+        sqlite_connection = sqlite3.connect('C:\\Python\\users.db')
         cursor = sqlite_connection.cursor()
         cursor2 = sqlite_connection.cursor()
         cursor3 = sqlite_connection.cursor()
@@ -55,11 +51,14 @@ def select_all_passwords():
         cursor.row_factory = lambda cursor, row: row[0]
         cursor3.row_factory = lambda cursor, row: row[0]
         # Get usernames query
-        sqlite_select_with_param = os.getenv('select_user')
+        select_user = """SELECT Username FROM users;"""
+        sqlite_select_with_param = select_user
         # Get encrypted passwords query
-        sqlite_select_with_param2 = os.getenv('select_pw')
+        select_pw = """SELECT Password, Key FROM users;"""
+        sqlite_select_with_param2 = select_pw
         # Get encrypted IV query
-        sqlite_select_with_param3 = os.getenv('select_iv')
+        select_iv = """SELECT IV FROM users;"""
+        sqlite_select_with_param3 = select_iv
         # Run usernames query
         cursor.execute(sqlite_select_with_param)
         # Run passwords query
@@ -96,8 +95,7 @@ def select_all_passwords():
         # For each tuple in the fetched_pws list, decrypt the pw based on the key
         for pw, key in fetched_pws:
             for ivs in fetched_iv:
-                ivs = ivs[0]
-                iv = b64decode(pw['iv'])
+                iv = b64decode(ivs)
                 # Create the cipher object and decrypt the data
                 cipher_decrypt = AES.new(key, AES.MODE_CBC, iv=iv)
                 deciphered_bytes = cipher_decrypt.decrypt(pw)
