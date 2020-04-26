@@ -1,5 +1,5 @@
 import logging
-import os
+import json
 import sqlite3
 import sys
 import pyperclip
@@ -45,11 +45,15 @@ def select_all_passwords():
         cursor = sqlite_connection.cursor()
         cursor2 = sqlite_connection.cursor()
         cursor3 = sqlite_connection.cursor()
+        cursor4 = sqlite_connection.cursor()
+        cursor5 = sqlite_connection.cursor()
         logging.info("Connected to SQLite")
 
         # No tuple format for username and IV data
         cursor.row_factory = lambda cursor, row: row[0]
         cursor3.row_factory = lambda cursor, row: row[0]
+        cursor4.row_factory = lambda cursor, row: row[0]
+        cursor5.row_factory = lambda cursor, row: row[0]
         # Get usernames query
         select_user = """SELECT Username FROM users;"""
         sqlite_select_with_param = select_user
@@ -59,18 +63,30 @@ def select_all_passwords():
         # Get encrypted IV query
         select_iv = """SELECT IV FROM users;"""
         sqlite_select_with_param3 = select_iv
+        # Get encrypted CT query
+        select_ct = """SELECT CT FROM users;"""
+        sqlite_select_with_param4 = select_ct
+        # Get encrypted Result query
+        select_result = """SELECT Result FROM users;"""
+        sqlite_select_with_param5 = select_result
         # Run usernames query
         cursor.execute(sqlite_select_with_param)
         # Run passwords query
         cursor2.execute(sqlite_select_with_param2)
         # Run IV query
         cursor3.execute(sqlite_select_with_param3)
+        # Run CT query
+        cursor4.execute(sqlite_select_with_param4)
+        # Run Result query
+        cursor5.execute(sqlite_select_with_param5)
         sqlite_connection.commit()
         logging.info("Python Variables read successfully into SqliteDb_developers table")
         # Fetch the data from the called queries
         db_users = cursor.fetchall()
         db_pws = cursor2.fetchall()
         db_iv = cursor3.fetchall()
+        db_ct = cursor4.fetchall()
+        db_result = cursor5.fetchall()
 
         # For all users called, add to a list
         fetched_users = []
@@ -85,24 +101,42 @@ def select_all_passwords():
         fetched_iv = []
         for ivs in db_iv:
             fetched_iv.append(ivs)
+
+        fetched_ct = []
+        for cts in db_ct:
+            fetched_ct.append(cts)
+
+        fetched_result = []
+        for results in db_result:
+            fetched_result.append(results)
         # Close db connection
         cursor.close()
         cursor2.close()
+        cursor3.close()
+        cursor4.close()
+        cursor5.close()
         sqlite_connection.close()
         logging.info("The SQLite connection is closed")
         # === Decrypt ===
         decrypt_pw = []
         # For each tuple in the fetched_pws list, decrypt the pw based on the key
         for pw, key in fetched_pws:
-            for ivs in fetched_iv:
-                iv = b64decode(ivs)
+            for results in fetched_result:
+                b64 = json.loads(results)
+                ct = b64decode(b64['ciphertext'])
+                iv = b64decode(b64['iv'])
                 # Create the cipher object and decrypt the data
-                cipher_decrypt = AES.new(key, AES.MODE_CBC, iv=iv)
-                deciphered_bytes = cipher_decrypt.decrypt(pw)
-
-                # Convert the bytes object back to the string
-                decrypted_data = deciphered_bytes.decode('utf-8')
-                decrypt_pw.append(decrypted_data)
+                cipher_decrypt = AES.new(key, AES.MODE_CFB, iv=iv)
+                dec_pw = cipher_decrypt.decrypt(ct)
+                print("The message was: ", dec_pw)
+                # dpw = b64decode(decrypt_pw).decode('utf-8')
+                dpw = dec_pw.decode('utf-8')
+                print("This is dpw: ", dpw)
+                # deciphered_bytes = cipher_decrypt.decrypt(pw)
+                #
+                # # Convert the bytes object back to the string
+                # decrypted_data = deciphered_bytes.decode('utf-8')
+                decrypt_pw.append(dpw)
         # For every username in the fetched_users and decrypt_pw lists, add to the dictionary of PASSWORDS. Usernames
         # are the keys, passwords are the values.
         PASSWORDS = {k:v for k,v in zip(fetched_users, decrypt_pw)}
@@ -128,6 +162,7 @@ try:
     if account in PASSWORDS:
         pyperclip.copy(PASSWORDS[account])
         print('Password for {} copied to clipboard.'.format(account))
+        # print('Password for {} (value: "{}") copied to clipboard.'.format(account, PASSWORDS[account]))
     else:
         print('There is no account named {}.'.format(account))
 except Exception as e:

@@ -1,4 +1,4 @@
-import os
+import json
 import sqlite3
 import tkinter as tk
 import logging
@@ -23,16 +23,17 @@ logging.getLogger('').addHandler(console)
 
 # Function to insert a username, password, and key value into the local database when the user enters in a username
 # and password values in their respected entry boxes and hits the 'Submit' button.
-def insert_variable_into_table(username, password, key, iv, ct):
+def insert_variable_into_table(username, password, key, iv, ct, result):
     success = True
     try:
         # Make a connection to the local db
         sqlite_connection = sqlite3.connect('users.db')
         cursor = sqlite_connection.cursor()
         logging.info("Connected to SQLite")
+
         # SQL Insert query
-        sqlite_insert_with_param = """INSERT INTO users (Username, Password, Key, IV, CT) VALUES (?, ?, ?, ?, ?);"""
-        data = (username, password, key, iv, ct)
+        sqlite_insert_with_param = """INSERT INTO users (Username, Password, Key, IV, CT, RESULT) VALUES (?, ?, ?, ?, ?, ?);"""
+        data = (username, password, key, iv, ct, result)
         # Run the Insert query
         cursor.execute(sqlite_insert_with_param, data)
         sqlite_connection.commit()
@@ -105,17 +106,21 @@ def set_data_to_db():
             # === Encrypt ===
             # First make your data a bytes object. To convert a string to a bytes object, we can call .encode() on it
             pw_data = pw.encode('utf-8')
+            print(pw_data)
+            print("pw from form: ", pw)
 
             # Create the cipher object and encrypt the data
             cipher_encrypt = AES.new(key, AES.MODE_CFB)
-            ct_bytes = cipher_encrypt.encrypt(pad(pw_data, AES.block_size))
-            # ciphered_bytes = cipher_encrypt.encrypt(pw_data)
+            # ct_bytes  = cipher_encrypt.encrypt(pad(pw_data, AES.block_size))
+            ct_bytes  = cipher_encrypt.encrypt(pw_data)
             iv = b64encode(cipher_encrypt.iv).decode('utf-8')
             ct = b64encode(ct_bytes).decode('utf-8')
+            result = json.dumps({'iv': iv, 'ciphertext': ct})
+            print(result)
             # This is now our data
             # iv = cipher_encrypt.iv
             ciphered_data = ct_bytes
-            insert_variable_into_table(user, ciphered_data, key, iv, ct)
+            insert_variable_into_table(user, ciphered_data, key, iv, ct, result)
             # TO DO: Validation if the insert_variable_into_table hit an error or not
             success = True
             success2 = True
