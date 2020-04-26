@@ -53,29 +53,26 @@ def insert_variable_into_table(username, password, key, result):
 
 
 # Function to check if the Username field is blank
-def user_check_empty():
+def user_pass_check_empty():
     success = True
-    if UE.get():
+    if UE.get() and PE.get():
         success = True
+        return success
+    elif not UE.get() and PE.get():
+        logging.error("Failed: Input is required for Username")
+        mb.showerror('Failed', 'Input is required for Username')
+        success = False
+        return success
+    elif not PE.get() and UE.get():
+        logging.error("Failed: Input is required for Password")
+        mb.showerror('Failed', 'Input is required for Password')
+        success = False
         return success
     else:
         success = False
-        logging.error("Failed: Input is required for Username")
-        mb.showerror('Failed', 'Input is required for Username')
+        logging.error("Failed: Input is required for Username and Password")
+        mb.showerror('Failed', 'Input is required for Username and Password')
         return success
-
-
-# Function to check if the Password field is blank
-def password_check_empty():
-    success2 = True
-    if PE.get():
-        success2 = True
-        return success2
-    else:
-        success2 = False
-        logging.error("Failed: Input is required for Password")
-        mb.showerror('Failed', 'Input is required for Password')
-        return success2
 
 
 '''
@@ -94,9 +91,8 @@ def set_data_to_db():
     try:
         # Generate the key
         key = get_random_bytes(32)
-        success_check = user_check_empty()
-        success2_check = password_check_empty()
-        if not success_check or not success2_check:
+        success_check = user_pass_check_empty()
+        if not success_check:
             success = False
             success2 = False
         else:
