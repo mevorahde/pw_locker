@@ -94,7 +94,6 @@ def set_data_to_db():
         success_check = user_pass_check_empty()
         if not success_check:
             success = False
-            success2 = False
         else:
             user = UE.get()
             user = user.casefold()
@@ -116,14 +115,13 @@ def set_data_to_db():
             insert_variable_into_table(user, ciphered_data, key, result)
             # TO DO: Validation if the insert_variable_into_table hit an error or not
             success = True
-            success2 = True
 
         # Clears out the username and password entry boxes
         UE.delete(0, tk.END)
         PE.delete(0, tk.END)
 
         # Successful pop up message
-        if success and success2:
+        if success:
             mb.showinfo('Success', 'Data Successfully Saved')
     except Exception as e:
         logging.error("Something went wrong!", e)
