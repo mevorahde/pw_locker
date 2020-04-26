@@ -117,6 +117,8 @@ def select_all_passwords():
         cursor5.close()
         sqlite_connection.close()
         logging.info("The SQLite connection is closed")
+        print("pws: ", fetched_pws)
+        print("JSON: ", fetched_result)
         # === Decrypt ===
         decrypt_pw = []
         # For each tuple in the fetched_pws list, decrypt the pw based on the key
@@ -137,6 +139,7 @@ def select_all_passwords():
                 # # Convert the bytes object back to the string
                 # decrypted_data = deciphered_bytes.decode('utf-8')
                 decrypt_pw.append(dpw)
+                print("list of decrypt_pw: ", decrypt_pw)
         # For every username in the fetched_users and decrypt_pw lists, add to the dictionary of PASSWORDS. Usernames
         # are the keys, passwords are the values.
         PASSWORDS = {k:v for k,v in zip(fetched_users, decrypt_pw)}

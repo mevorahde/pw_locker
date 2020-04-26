@@ -8,7 +8,6 @@ from base64 import b64encode
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
 
-
 # Logging configurations
 logging.basicConfig(filename='activity.log',
                     level=logging.DEBUG,
@@ -106,13 +105,11 @@ def set_data_to_db():
             # === Encrypt ===
             # First make your data a bytes object. To convert a string to a bytes object, we can call .encode() on it
             pw_data = pw.encode('utf-8')
-            print(pw_data)
-            print("pw from form: ", pw)
 
             # Create the cipher object and encrypt the data
             cipher_encrypt = AES.new(key, AES.MODE_CFB)
             # ct_bytes  = cipher_encrypt.encrypt(pad(pw_data, AES.block_size))
-            ct_bytes  = cipher_encrypt.encrypt(pw_data)
+            ct_bytes = cipher_encrypt.encrypt(pw_data)
             iv = b64encode(cipher_encrypt.iv).decode('utf-8')
             ct = b64encode(ct_bytes).decode('utf-8')
             result = json.dumps({'iv': iv, 'ciphertext': ct})
