@@ -1,3 +1,3 @@
-cd "C:\Python"
-"C:\Python\pw.exe" %*
+cd "C:\Password Locker"
+"C:\Password Locker\pw.exe" %*
 @pause
