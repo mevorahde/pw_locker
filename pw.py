@@ -84,9 +84,9 @@ try:
     # If the second argument is a key is the PASSWORDS dictionary, copy it's value, the decrypted password for the user.
     if account in PASSWORDS:
         pyperclip.copy(PASSWORDS[account])
-        print('Password for {} copied to clipboard.'.format(account))
+        print('Password for {} copied to clipboard.'.format(sys.argv[1]))
     else:
-        print('There is no account named {}.'.format(account))
+        print('There is no account named {}.'.format(sys.argv[1]))
 except Exception as e:
     logging.exception(e.args)
     print("Cannot process your request at this time.")
