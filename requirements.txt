@@ -1,6 +1,6 @@
 Click==7.0
 cx-Freeze==6.1
-pycryptodome==3.9.7
+pycryptodome==3.19.1
 pyperclip==1.7.0
 python-dotenv==0.12.0
 python-dotenv-run==0.1.4
