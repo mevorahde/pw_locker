@@ -3,11 +3,16 @@ import importlib
 import shutil
 import subprocess
 import sys
-import tomllib
 import zipfile
 from pathlib import Path
 
 from packaging.requirements import Requirement
+from packaging.version import Version
+
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -38,11 +43,26 @@ def test_runtime_dependencies_are_bounded_and_minimal():
     assert all(str(dependency.specifier) for dependency in dependencies)
 
 
-def test_development_dependency_group_contains_only_pytest():
+def test_development_dependency_group_is_bounded_and_compatible():
     development = load_pyproject()["project"]["optional-dependencies"]["dev"]
     requirements = [Requirement(value) for value in development]
-    assert [requirement.name.casefold() for requirement in requirements] == ["pytest"]
-    assert str(requirements[0].specifier)
+    by_name = {requirement.name.casefold(): requirement for requirement in requirements}
+    assert set(by_name) == {"pytest", "setuptools", "tomli"}
+
+    pytest_requirement = by_name["pytest"]
+    assert Version("8.3") in pytest_requirement.specifier
+    assert Version("10") not in pytest_requirement.specifier
+    assert pytest_requirement.marker is None
+
+    build_requirement = Requirement(load_pyproject()["build-system"]["requires"][0])
+    setuptools_requirement = by_name["setuptools"]
+    assert setuptools_requirement.specifier == build_requirement.specifier
+    assert setuptools_requirement.marker is None
+
+    tomli_requirement = by_name["tomli"]
+    assert Version("2.0.1") in tomli_requirement.specifier
+    assert Version("3") not in tomli_requirement.specifier
+    assert str(tomli_requirement.marker) == 'python_version < "3.11"'
 
 
 def test_pep639_license_metadata_is_declared():
