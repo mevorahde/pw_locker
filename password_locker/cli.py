@@ -21,6 +21,7 @@ from .vault import (
     VaultFormatError,
     VaultValidationError,
 )
+from .paths import default_vault_path
 
 
 EXIT_SUCCESS = 0
@@ -51,11 +52,6 @@ class CLIDependencies:
 
 class _ConfirmationMismatch(Exception):
     pass
-
-
-def default_vault_path() -> Path:
-    """Return the user-local default vault path."""
-    return Path.home() / ".password_locker" / "vault.db"
 
 
 def build_parser() -> argparse.ArgumentParser:
