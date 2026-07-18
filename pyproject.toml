@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=75,<81"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "password-locker"
+version = "2.0.0"
+description = "A local encrypted password vault with CLI and Tkinter interfaces."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+  { name = "David Mevorah" },
+]
+dependencies = [
+  "pycryptodome>=3.19,<4",
+  "pyperclip>=1.7,<2",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3,<10",
+]
+
+[project.scripts]
+password-locker = "password_locker.cli:main"
+
+[project.gui-scripts]
+password-locker-gui = "password_locker.gui:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["password_locker"]
+exclude = ["tests", "tests.*"]
+namespaces = false
