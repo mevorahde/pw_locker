@@ -282,6 +282,32 @@ class Vault:
         except (UnicodeDecodeError, ValueError):
             raise VaultIntegrityError("Credential could not be authenticated.") from None
 
+    def list_accounts(self) -> list[str]:
+        """Return normalized account names in deterministic order."""
+        try:
+            rows = self._active_connection().execute(
+                "SELECT account_name FROM credentials ORDER BY account_name"
+            ).fetchall()
+        except sqlite3.Error:
+            raise VaultFormatError("Vault database is invalid.") from None
+        if any(not isinstance(row[0], str) for row in rows):
+            raise VaultFormatError("Vault database is invalid.")
+        return [row[0] for row in rows]
+
+    def delete_credential(self, account_name: str) -> None:
+        """Delete one normalized account without decrypting its credential."""
+        normalized = _normalize_account_name(account_name)
+        connection = self._active_connection()
+        try:
+            with connection:
+                cursor = connection.execute(
+                    "DELETE FROM credentials WHERE account_name = ?", (normalized,)
+                )
+        except sqlite3.Error:
+            raise VaultFormatError("Vault database is invalid.") from None
+        if cursor.rowcount != 1:
+            raise AccountNotFoundError("Account was not found.")
+
     def close(self) -> None:
         """Close SQLite resources and clear the in-memory key buffer."""
         connection, self._connection = self._connection, None

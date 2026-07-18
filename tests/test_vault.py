@@ -348,3 +348,34 @@ def test_missing_or_unexpected_metadata_is_rejected(tmp_path, change):
 
 def test_production_kdf_defaults_pass_bounded_validation():
     DEFAULT_KDF_PARAMETERS.validate()
+
+
+def test_list_accounts_is_normalized_and_deterministic(tmp_path):
+    with create_vault(tmp_path / "vault.db") as vault:
+        vault.set_credential("  Zulu Example  ", FAKE_PASSWORD)
+        vault.set_credential("alpha EXAMPLE", FAKE_PASSWORD)
+        vault.set_credential("Bravo Example", FAKE_PASSWORD)
+        assert vault.list_accounts() == [
+            "alpha example",
+            "bravo example",
+            "zulu example",
+        ]
+
+
+def test_list_accounts_returns_empty_list_for_empty_vault(tmp_path):
+    with create_vault(tmp_path / "vault.db") as vault:
+        assert vault.list_accounts() == []
+
+
+def test_delete_credential_uses_normalized_account_name(tmp_path):
+    with create_vault(tmp_path / "vault.db") as vault:
+        vault.set_credential("Example Account", FAKE_PASSWORD)
+        vault.delete_credential("  EXAMPLE ACCOUNT ")
+        with pytest.raises(AccountNotFoundError):
+            vault.get_credential("example account")
+
+
+def test_delete_missing_credential_raises_domain_error(tmp_path):
+    with create_vault(tmp_path / "vault.db") as vault:
+        with pytest.raises(AccountNotFoundError):
+            vault.delete_credential("missing-example")
