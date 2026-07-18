@@ -13,6 +13,8 @@ The application stores credentials in a user-local SQLite vault rather than a re
 
 The project emphasizes practical defensive engineering: narrow database queries, parameter validation, generic error handling, conditional clipboard cleanup, deterministic account normalization, and automated tests around tampering and failure cases.
 
+![Password Locker GUI showing example accounts](docs/images/password-locker-gui.png)
+
 ## Features
 
 - Authenticated local vault backed by a versioned SQLite schema
