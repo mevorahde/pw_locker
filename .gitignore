@@ -137,5 +137,9 @@ dmypy.json
 *Db.*
 
 /users.db
+/vault.db
+/vault.db-journal
+/vault.db-shm
+/vault.db-wal
 /file.bin
 /ev.bin
