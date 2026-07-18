@@ -1,6 +1,7 @@
 # Password Locker
 
 [![Tests](https://github.com/mevorahde/pw_locker/actions/workflows/tests.yml/badge.svg)](https://github.com/mevorahde/pw_locker/actions/workflows/tests.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **Python 3.10+**
 
@@ -155,6 +156,10 @@ The project protects credential passwords stored in a local vault against offlin
 - This project has not received an independent professional security audit.
 
 Password Locker is not presented as unbreakable, production-certified, enterprise secret management, or a substitute for a professionally reviewed password manager.
+
+## License
+
+Password Locker is available under the [MIT License](LICENSE).
 
 ## Project history
 

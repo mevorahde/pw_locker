@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=75,<81"]
+requires = ["setuptools>=77.0.3,<81"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,6 +7,8 @@ name = "password-locker"
 version = "2.0.0"
 description = "A local encrypted password vault with CLI and Tkinter interfaces."
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.10"
 authors = [
   { name = "David Mevorah" },

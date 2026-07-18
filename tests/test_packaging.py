@@ -1,6 +1,10 @@
+import email.parser
 import importlib
+import shutil
+import subprocess
 import sys
 import tomllib
+import zipfile
 from pathlib import Path
 
 from packaging.requirements import Requirement
@@ -41,6 +45,16 @@ def test_development_dependency_group_contains_only_pytest():
     assert str(requirements[0].specifier)
 
 
+def test_pep639_license_metadata_is_declared():
+    pyproject = load_pyproject()
+    project = pyproject["project"]
+    build_requirement = Requirement(pyproject["build-system"]["requires"][0])
+    assert project["license"] == "MIT"
+    assert project["license-files"] == ["LICENSE"]
+    assert build_requirement.name == "setuptools"
+    assert "77.0.3" in str(build_requirement.specifier)
+
+
 def test_cli_and_gui_entry_points_target_secure_interfaces():
     project = load_pyproject()["project"]
     assert project["scripts"] == {
@@ -69,3 +83,63 @@ def test_importing_gui_entry_point_module_does_not_create_window(monkeypatch):
     sys.modules.pop("password_locker.gui", None)
     module = importlib.import_module("password_locker.gui")
     assert callable(module.main)
+
+
+def test_wheel_contains_pep639_license_metadata(tmp_path):
+    source = tmp_path / "source"
+    package = source / "password_locker"
+    wheel_directory = tmp_path / "wheel"
+    source.mkdir()
+    wheel_directory.mkdir()
+    for name in ("pyproject.toml", "README.md", "LICENSE"):
+        shutil.copy2(ROOT / name, source / name)
+    shutil.copytree(
+        ROOT / "password_locker",
+        package,
+        ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo"),
+    )
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pip",
+            "wheel",
+            "--no-deps",
+            "--no-build-isolation",
+            str(source),
+            "--wheel-dir",
+            str(wheel_directory),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    wheels = list(wheel_directory.glob("*.whl"))
+    assert len(wheels) == 1
+
+    with zipfile.ZipFile(wheels[0]) as wheel:
+        names = wheel.namelist()
+        metadata_name = next(
+            name for name in names if name.endswith(".dist-info/METADATA")
+        )
+        license_names = [
+            name for name in names if name.endswith(".dist-info/licenses/LICENSE")
+        ]
+        metadata = email.parser.BytesParser().parsebytes(wheel.read(metadata_name))
+
+    assert len(license_names) == 1
+    assert metadata["License-Expression"] == "MIT"
+    assert metadata.get_all("License-File") == ["LICENSE"]
+    forbidden = (
+        "tests/",
+        "users.db",
+        "vault.db",
+        ".env",
+        ".exe",
+        ".log",
+        ".idea/",
+        "__pycache__",
+        ".pyc",
+    )
+    assert not any(any(item in name for item in forbidden) for name in names)
