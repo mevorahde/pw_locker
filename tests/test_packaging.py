@@ -73,6 +73,11 @@ def test_package_discovery_includes_only_application_package():
     assert discovery["namespaces"] is False
 
 
+def test_icon_is_declared_as_package_data():
+    package_data = load_pyproject()["tool"]["setuptools"]["package-data"]
+    assert package_data == {"password_locker": ["assets/*.ico"]}
+
+
 def test_importing_gui_entry_point_module_does_not_create_window(monkeypatch):
     import tkinter
 
@@ -131,6 +136,8 @@ def test_wheel_contains_pep639_license_metadata(tmp_path):
     assert len(license_names) == 1
     assert metadata["License-Expression"] == "MIT"
     assert metadata.get_all("License-File") == ["LICENSE"]
+    assert names.count("password_locker/assets/password-locker.ico") == 1
+    assert "favicon.ico" not in names
     forbidden = (
         "tests/",
         "users.db",

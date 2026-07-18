@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import tkinter as tk
+from importlib import resources
 from pathlib import Path
 from tkinter import messagebox, ttk
 
@@ -16,6 +17,18 @@ from .paths import default_vault_path
 
 
 APPLICATION_TITLE = "Password Locker"
+ICON_RESOURCE = ("assets", "password-locker.ico")
+
+
+def apply_application_icon(root: tk.Misc) -> bool:
+    """Apply the packaged application icon when the Tk platform supports it."""
+    try:
+        icon_resource = resources.files("password_locker").joinpath(*ICON_RESOURCE)
+        with resources.as_file(icon_resource) as icon_path:
+            root.iconbitmap(default=str(icon_path))
+    except (FileNotFoundError, OSError, tk.TclError):
+        return False
+    return True
 
 
 class PasswordLockerApp:
@@ -51,6 +64,7 @@ class PasswordLockerApp:
         self._save_submission_pending = False
 
         self.root.title(APPLICATION_TITLE)
+        apply_application_icon(self.root)
         self.root.minsize(620, 440)
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(0, weight=1)

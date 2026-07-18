@@ -1,6 +1,8 @@
 import importlib
 import subprocess
 import sys
+from importlib import resources
+from pathlib import Path
 
 from password_locker.gui_controller import ControllerResult
 
@@ -15,6 +17,79 @@ def test_gui_module_import_does_not_create_tk_root(monkeypatch):
     sys.modules.pop("password_locker.gui", None)
     module = importlib.import_module("password_locker.gui")
     assert module.APPLICATION_TITLE == "Password Locker"
+
+
+def test_packaged_icon_resource_exists_and_is_applied_from_expected_path():
+    from password_locker import gui
+
+    icon_resource = resources.files("password_locker").joinpath(
+        "assets", "password-locker.ico"
+    )
+
+    class IconRoot:
+        def __init__(self):
+            self.applied_path = None
+
+        def iconbitmap(self, *, default):
+            self.applied_path = Path(default)
+
+    root = IconRoot()
+    assert icon_resource.is_file()
+    assert gui.apply_application_icon(root)
+    assert root.applied_path.name == "password-locker.ico"
+    assert root.applied_path.parent.name == "assets"
+
+
+def test_unsupported_icon_operation_does_not_crash_startup():
+    from password_locker import gui
+
+    class UnsupportedIconRoot:
+        def iconbitmap(self, *, default):
+            raise gui.tk.TclError("icon operation unsupported")
+
+    assert gui.apply_application_icon(UnsupportedIconRoot()) is False
+
+
+def test_app_initialization_attempts_to_apply_icon_before_showing_screen(monkeypatch):
+    from password_locker import gui
+
+    events = []
+
+    class InitializationRoot:
+        def title(self, value):
+            events.append("title")
+
+        def minsize(self, width, height):
+            events.append("minsize")
+
+        def columnconfigure(self, column, *, weight):
+            pass
+
+        def rowconfigure(self, row, *, weight):
+            pass
+
+        def protocol(self, name, callback):
+            pass
+
+    def fake_variable(*, master, value=""):
+        return FakeVariable(value)
+
+    monkeypatch.setattr(gui.tk, "StringVar", fake_variable)
+    monkeypatch.setattr(gui.tk, "BooleanVar", fake_variable)
+    monkeypatch.setattr(
+        gui,
+        "apply_application_icon",
+        lambda root: events.append("icon") or True,
+    )
+    monkeypatch.setattr(
+        gui.PasswordLockerApp,
+        "_show_current_state",
+        lambda self: events.append("screen"),
+    )
+
+    gui.PasswordLockerApp(InitializationRoot(), controller=object())
+
+    assert events.index("icon") < events.index("screen")
 
 
 def test_cli_module_help_still_succeeds_without_gui_or_vault():

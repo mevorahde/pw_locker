@@ -34,3 +34,6 @@ where = ["."]
 include = ["password_locker"]
 exclude = ["tests", "tests.*"]
 namespaces = false
+
+[tool.setuptools.package-data]
+password_locker = ["assets/*.ico"]
