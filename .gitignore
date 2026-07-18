@@ -32,6 +32,7 @@ MANIFEST
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
+*.exe
 
 # Installer logs
 pip-log.txt
@@ -103,7 +104,9 @@ celerybeat.pid
 
 # Environments
 .env
-.venv
+.env.*
+!.env.example
+.venv/
 env/
 venv/
 ENV/
@@ -129,9 +132,14 @@ dmypy.json
 .pyre/
 
 .idea/
+*.iml
 .vs/
 *Db.*
 
 /users.db
+/vault.db
+/vault.db-journal
+/vault.db-shm
+/vault.db-wal
 /file.bin
 /ev.bin
