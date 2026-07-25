@@ -27,6 +27,7 @@ dev = [
 
 [project.scripts]
 password-locker = "password_locker.cli:main"
+pw = "password_locker.pw:main"
 
 [project.gui-scripts]
 password-locker-gui = "password_locker.gui:main"
