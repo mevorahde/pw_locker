@@ -65,6 +65,39 @@ python -m pip install -e ".[dev]"
 
 Tkinter is provided by the Python installation rather than PyPI. Ensure the selected Python distribution includes Tk support before using the GUI.
 
+## Launching on Windows
+
+The installed commands are available to PowerShell, Windows Terminal, and `Win + R` only when the installation's Scripts directory is on `PATH`. Merely cloning the repository does not make Windows recognize them.
+
+For an isolated installation that exposes the commands, use pipx:
+
+```powershell
+py -m pip install --user pipx
+py -m pipx ensurepath
+```
+
+Restart the terminal, or sign out and back in if required, then install from the repository:
+
+```powershell
+pipx install .
+```
+
+Confirm that Windows can locate the short alias before using it from `Win + R`:
+
+```powershell
+where.exe pw
+```
+
+For development without a global installation, invoke the entry points directly from the project's virtual environment:
+
+```powershell
+.\.venv\Scripts\password-locker-gui.exe
+.\.venv\Scripts\password-locker.exe --help
+.\.venv\Scripts\pw.exe --help
+```
+
+Do not permanently add a project-specific `.venv\Scripts` directory to `PATH`.
+
 ## GUI usage
 
 Launch the installed GUI entry point:
@@ -96,6 +129,22 @@ Copy one account's password to the clipboard:
 ```powershell
 password-locker get ACCOUNT
 ```
+
+On Windows, the short `pw` alias performs the same secure `get` operation and is convenient from `Win + R`:
+
+```powershell
+pw ACCOUNT
+pw iTunes
+pw "Apple ID"
+```
+
+Both forms prompt interactively for the master password and copy the matching credential to the clipboard without displaying it. By default, the command waits 30 seconds and clears the clipboard only if it still contains the copied credential, preserving any newer clipboard content. A different bounded delay can be requested with:
+
+```powershell
+pw "Apple ID" --clear-after 30
+```
+
+This SQLite Password Locker uses the `pw` alias. The separate SQL Password Locker uses `pwsql`, avoiding a command-name conflict.
 
 List normalized account names:
 

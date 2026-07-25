@@ -78,7 +78,8 @@ def test_pep639_license_metadata_is_declared():
 def test_cli_and_gui_entry_points_target_secure_interfaces():
     project = load_pyproject()["project"]
     assert project["scripts"] == {
-        "password-locker": "password_locker.cli:main"
+        "password-locker": "password_locker.cli:main",
+        "pw": "password_locker.pw:main",
     }
     assert project["gui-scripts"] == {
         "password-locker-gui": "password_locker.gui:main"
@@ -148,14 +149,21 @@ def test_wheel_contains_pep639_license_metadata(tmp_path):
         metadata_name = next(
             name for name in names if name.endswith(".dist-info/METADATA")
         )
+        entry_points_name = next(
+            name for name in names if name.endswith(".dist-info/entry_points.txt")
+        )
         license_names = [
             name for name in names if name.endswith(".dist-info/licenses/LICENSE")
         ]
         metadata = email.parser.BytesParser().parsebytes(wheel.read(metadata_name))
+        entry_points = wheel.read(entry_points_name).decode("utf-8")
 
     assert len(license_names) == 1
     assert metadata["License-Expression"] == "MIT"
     assert metadata.get_all("License-File") == ["LICENSE"]
+    assert "password-locker = password_locker.cli:main" in entry_points
+    assert "pw = password_locker.pw:main" in entry_points
+    assert "password-locker-gui = password_locker.gui:main" in entry_points
     assert names.count("password_locker/assets/password-locker.ico") == 1
     assert "favicon.ico" not in names
     forbidden = (
